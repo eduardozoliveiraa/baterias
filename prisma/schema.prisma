@@ -1,0 +1,22 @@
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Bateria {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  tag         String
+  modelo      String
+  tipoBateria String
+  tensoes     Json     
+  flutuacoes  Json     
+  equalizacao Boolean
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([tag, modelo])
+}
