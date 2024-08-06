@@ -6,11 +6,9 @@ const prisma = new PrismaClient();
 export async function POST(req: NextRequest) {
   try {
     const requestBody = await req.json();
-    console.log('Incoming request body:', requestBody);
 
     const { tag, modelo, tipoBateria, tensoes, flutuacoes, equalizacao } = requestBody;
 
-    console.log('Checking for existing battery with tag and model:', tag, modelo);
     const existingBateria = await prisma.bateria.findUnique({
       where: {
         tag_modelo: {

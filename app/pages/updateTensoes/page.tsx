@@ -14,7 +14,7 @@ const UpdateTensoes = () => {
 
   const fetchTensoes = async () => {
     try {
-      const response = await fetch(`../api/getTensoes?tag=${tag}&modelo=${modelo}`);
+      const response = await fetch(`/api/getTensoes?tag=${tag}&modelo=${modelo}`);
       if (response.ok) {
         const data = await response.json();
         setTensoes(data.tensoes);
