@@ -78,6 +78,14 @@ const Baterias = () => {
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
+
+    const tensoesPreenchidas = tensoes.every(t => t.valor !== "");
+    if (!tag || !modelo || !tipoBateria || !quantidadeTensoes || !tensoesPreenchidas) {
+      setMessageType("error");
+      setMessage("Por favor, preencha todos os campos obrigatórios.");
+      return;
+    }
+
     const bateriaData = {
       tag,
       modelo,
@@ -116,24 +124,16 @@ const Baterias = () => {
 
   const generatePDF = () => {
     const pdf = new jsPDF();
-
+  
     // Cabeçalho
-    pdf.setFontSize(12);
-    pdf.text("PETROBRAS", 20, 20);
-    pdf.text("PE-2IND-00005", 100, 20);
-    pdf.text("DATA:", 180, 20);
-    pdf.line(175, 22, 210, 22);
-    pdf.text("ANEXO A - REGISTRO DE INSPEÇÃO E", 60, 30);
-    pdf.text("MANUTENÇÃO TRIMESTRAL EM BATERIAS DE", 60, 40);
-    pdf.text("ACUMULADORES CHUMBO-ÁCIDOS", 60, 50);
-    pdf.text("Nº ORDEM:", 180, 50);
-    pdf.line(175, 52, 210, 52);
-    pdf.text("TAG:", 20, 60);
-    pdf.line(35, 62, 100, 62);
-    pdf.text("Executantes:", 120, 60);
-    pdf.line(140, 62, 210, 62);
-
-    // Checklist
+    pdf.setFontSize(10);
+    pdf.text("DATA:", 150, 20);
+    pdf.text("ANEXO A - REGISTRO DE INSPEÇÃO E", 30, 20);
+    pdf.text("MANUTENÇÃO TRIMESTRAL EM BATERIAS DE", 30, 26);
+    pdf.text("ACUMULADORES CHUMBO-ÁCIDOS", 30, 32);
+    pdf.text("Nº ORDEM:", 150, 30);
+    pdf.text("Executantes:", 20, 50);
+  
     const checklist = [
       "1. Trincas, Vazamentos ou Estufamentos: ( ) NÃO  ( ) SIM  descrever:",
       "2. Válvulas de segurança (quebras, entupimentos, borracha de vedação danificada):",
@@ -146,33 +146,47 @@ const Baterias = () => {
       "7. Condições dos suportes, do seu aterramento e dos pés isoladores: ( ) OK  ( ) Problemas:",
       "8. Sistema de exaustão instalado e operando: ( ) SIM  ( ) NÃO  Descrever:",
     ];
-
-    pdf.setFontSize(10);
+  
+    pdf.setFontSize(8);
     checklist.forEach((item, index) => {
-      pdf.text(item, 20, 70 + index * 10);
+      pdf.text(item, 20, 55 + index * 5);
     });
-
-    // Relatório das tensões
-    pdf.setFontSize(14);
-    pdf.text(`Tag da Bateria: ${tag}`, 20, 70 + checklist.length * 10 + 10);
-    pdf.text(`Modelo da Bateria: ${modelo}`, 20, 70 + checklist.length * 10 + 20);
-    pdf.text(`Tipo da Bateria: ${tipoBateria}`, 20, 70 + checklist.length * 10 + 30);
-
+  
+    pdf.setFontSize(10);
+    pdf.text(`Tag da Bateria: ${tag}`, 20, 110);
+    pdf.text(`Modelo da Bateria: ${modelo}`, 20, 115);
+    pdf.text(`Tipo da Bateria: ${tipoBateria}`, 20, 120);
+  
     if (equalizacao) {
-      pdf.text("Necessidade de carga de equalização!", 20, 70 + checklist.length * 10 + 40);
+      pdf.text("Necessidade de carga de equalização!", 20, 126);
     }
-
-    pdf.setFontSize(12);
-    pdf.text("Tensões dos Elementos:", 20, 70 + checklist.length * 10 + 50);
-    tensoes.forEach((t, index) => {
-      const yPos = 70 + checklist.length * 10 + 60 + index * 10;
-      const textColor = desvios[index] > 0.04 ? "red" : "black";
-      pdf.setTextColor(textColor);
-      pdf.text(`Elemento ${index + 1}: ${t.valor}`, 20, yPos);
-    });
-
+  
+    pdf.setFontSize(10);
+    pdf.text("Tensões dos Elementos:", 20, 133);
+  
+    // Tabela de tensões
+    const startX = 20;
+    const startY = 140;
+    const colWidth = 30; // Largura de cada coluna
+    const rowHeight = 10;
+    const numCols = 6; // Número de colunas que deseja exibir
+  
+    // Desenha a tabela com várias colunas
+    for (let i = 0; i < quantidadeTensoes; i++) {
+      const rowIndex = Math.floor(i / numCols);
+      const colIndex = i % numCols;
+      const xPos = startX + colIndex * colWidth;
+      const yPos = startY + rowIndex * rowHeight;
+  
+      pdf.rect(xPos, yPos, colWidth, rowHeight);
+  
+      pdf.text(`Tensão ${i + 1}: ${tensoes[i]?.valor || ''}`, xPos + 5, yPos + rowHeight - 3);
+    }
+  
     pdf.save(`relatorio_bateria_${tag}_${modelo}.pdf`);
   };
+  
+  
 
   return (
     <div className="bg-gray-900 text-gray-100 min-h-screen">
@@ -250,7 +264,7 @@ const Baterias = () => {
                 </div>
               ))}
               <button
-                className="bg-green-500 p-2 rounded text-gray-100"
+                className="bg-green-500 p-2 rounded w-full text-gray-100"
                 type="submit"
               >
                 Enviar Dados da Bateria
@@ -264,18 +278,20 @@ const Baterias = () => {
                 {message}
               </div>
             )}
-            <button
-              className="bg-blue-500 p-2 rounded text-gray-100 mt-4"
-              onClick={generatePDF}
-            >
-              Gerar Relatório PDF
-            </button>
-            <button
-              className="bg-yellow-500 p-2 rounded text-gray-100 mt-4"
-              onClick={() => router.push('pages/updateTensoes')}
-            >
-              Atualizar Tensões
-            </button>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+              <button
+                className="bg-blue-500 p-2 rounded text-gray-100"
+                onClick={generatePDF}
+              >
+                Gerar Relatório PDF
+              </button>
+              <button
+                className="bg-yellow-500 p-2 rounded text-gray-100"
+                onClick={() => router.push('pages/updateTensoes')}
+              >
+                Atualizar Tensões
+              </button>
+            </div>
           </>
         )}
       </div>
