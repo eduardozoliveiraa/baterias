@@ -21,18 +21,16 @@ export async function GET(req: NextRequest) {
         },
       },
     });
-
+    
     if (!bateria) {
       return NextResponse.json({ message: 'Bateria não encontrada' }, { status: 404 });
     }
-
+    
     const tensoes = bateria.tensoes ? (typeof bateria.tensoes === 'string' ? JSON.parse(bateria.tensoes) : bateria.tensoes) : [];
     return NextResponse.json({ tensoes }, { status: 200 });
-  } catch (error) {
-    console.error('Erro ao buscar dados da bateria:', error);
-    if (error instanceof Error) {
-      return NextResponse.json({ message: 'Erro ao buscar dados da bateria', error: error.message }, { status: 500 });
-    }
-    return NextResponse.json({ message: 'Erro desconhecido ao buscar dados da bateria' }, { status: 500 });
+  } catch (error: any) {
+    console.error('Erro ao buscar dados da bateria:', error.message, error.stack);
+    return NextResponse.json({ message: 'Erro ao buscar dados da bateria', error: error.message }, { status: 500 });
   }
+  
 }
